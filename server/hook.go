@@ -332,6 +332,7 @@ func PostHook(c *gin.Context) {
 		}
 		task.Labels["platform"] = item.Platform
 		task.Labels["repo"] = b.Repo.FullName
+		logrus.Debugf("%#v", task.Labels)
 
 		task.Data, _ = json.Marshal(rpc.Pipeline{
 			ID:      fmt.Sprint(item.Proc.ID),

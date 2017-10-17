@@ -85,13 +85,21 @@ type RPC struct {
 
 // Next implements the rpc.Next function
 func (s *RPC) Next(c context.Context, filter rpc.Filter) (*rpc.Pipeline, error) {
+	logrus.Debugf("agent connected: filter: %#v", filter)
 	metadata, ok := metadata.FromContext(c)
 	if ok {
 		hostname, ok := metadata["hostname"]
 		if ok && len(hostname) != 0 {
 			logrus.Debugf("agent connected: %s: polling", hostname[0])
+			// if hostname[0] == "agent1" {
+			// 	filter.Expr = "ram >= 32 AND cpu >= 16"
+			// } else if hostname[0] == "agent2" {
+			// 	filter.Expr = "env == 'production'"
+			// }
 		}
 	}
+
+	logrus.Debugf("agent connected: new filter: %#v", filter)
 
 	fn, err := createFilterFunc(filter)
 	if err != nil {
@@ -480,8 +488,10 @@ func createFilterFunc(filter rpc.Filter) (queue.Filter, error) {
 	var st *expr.Selector
 	var err error
 
+	logrus.Debugf("filter.Expr: %#v", filter.Expr)
 	if filter.Expr != "" {
 		st, err = expr.ParseString(filter.Expr)
+		logrus.Debugf("st: %#v", st)
 		if err != nil {
 			return nil, err
 		}
@@ -490,9 +500,10 @@ func createFilterFunc(filter rpc.Filter) (queue.Filter, error) {
 	return func(task *queue.Task) bool {
 		if st != nil {
 			match, _ := st.Eval(expr.NewRow(task.Labels))
+			logrus.Debugf("match: %#v", match)
 			return match
 		}
-
+		logrus.Debugf("filter.Labels: %#v", filter.Labels)
 		for k, v := range filter.Labels {
 			if task.Labels[k] != v {
 				return false
@@ -527,9 +538,11 @@ func (s *DroneServer) Next(c oldcontext.Context, req *proto.NextRequest) (*proto
 	}
 	filter := rpc.Filter{
 		Labels: req.GetFilter().GetLabels(),
+		Expr:   req.GetFilter().GetExpr(),
 	}
 
 	res := new(proto.NextReply)
+	fmt.Printf("perr next\n")
 	pipeline, err := peer.Next(c, filter)
 	if err != nil {
 		return res, err

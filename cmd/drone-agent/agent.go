@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -29,6 +30,7 @@ import (
 )
 
 func loop(c *cli.Context) error {
+	fmt.Println(c.String("filter"))
 	filter := rpc.Filter{
 		Labels: map[string]string{
 			"platform": c.String("platform"),
@@ -105,11 +107,13 @@ func loop(c *cli.Context) error {
 				if sigterm.IsSet() {
 					return
 				}
+				fmt.Printf("runner filter: %#v\n", filter)
 				r := runner{
 					client:   client,
 					filter:   filter,
 					hostname: hostname,
 				}
+				fmt.Printf("runner: %#v\n", r)
 				if err := r.run(ctx); err != nil {
 					log.Error().Err(err).Msg("pipeline done with error")
 					return
@@ -144,6 +148,7 @@ func (r *runner) run(ctx context.Context) error {
 	ctxmeta := metadata.NewOutgoingContext(context.Background(), meta)
 
 	// get the next job from the queue
+	log.Printf("1. filter: %#v\n", r.filter)
 	work, err := r.client.Next(ctx, r.filter)
 	if err != nil {
 		return err
