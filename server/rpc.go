@@ -498,12 +498,14 @@ func createFilterFunc(filter rpc.Filter) (queue.Filter, error) {
 	}
 
 	return func(task *queue.Task) bool {
+		logrus.Debugf("filter.Labels: %#v", filter.Labels)
+		logrus.Debugf("task.Labels: %#v", task.Labels)
 		if st != nil {
 			match, _ := st.Eval(expr.NewRow(task.Labels))
 			logrus.Debugf("match: %#v", match)
 			return match
 		}
-		logrus.Debugf("filter.Labels: %#v", filter.Labels)
+
 		for k, v := range filter.Labels {
 			if task.Labels[k] != v {
 				return false
