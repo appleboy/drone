@@ -52,7 +52,7 @@ func provideClient(config config.Config) *scm.Client {
 		return provideBitbucketClient(config)
 	case config.Github.ClientID != "":
 		return provideGithubClient(config)
-	case config.Gitea.Server != "":
+	case config.Gitea.ClientID != "":
 		return provideGiteaClient(config)
 	case config.GitLab.ClientID != "":
 		return provideGitlabClient(config)
